@@ -1,0 +1,36 @@
+name: Budget
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  budget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install GNU ledger
+        run: sudo apt-get update && sudo apt-get install -y ledger
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Run budget program
+        working-directory: budget
+        run: cargo run
+
+      - name: Check for uncommitted changes
+        run: |
+          if ! git diff --exit-code; then
+            echo ""
+            echo "Error: Budget-generated files are out of date."
+            echo "Please run 'cargo run' in the budget directory and commit the results."
+            exit 1
+          fi
+
+      - name: Check formatting
+        working-directory: budget
+        run: cargo fmt --check
